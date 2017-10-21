@@ -1,0 +1,6 @@
+*.gitignore
+*.sln
+*.vcxproj
+*.filters
+*.sublime-workspace
+src/Source
