@@ -130,6 +130,9 @@ void ofApp::setup(){
         // ofExit();
     }
 
+
+    // terrainVbo.setVertexData(heightMap, 3, mapWidth*mapHeight, GL_DYNAMIC_DRAW);
+
     mesh.setMode(OF_PRIMITIVE_TRIANGLES);
     mesh.addVertices(heightMap);
 
@@ -151,6 +154,8 @@ void ofApp::setup(){
             mesh.addIndex(x+(y+1)*mapWidth);           // 10
         }
     }
+
+    terrainVbo.setMesh(mesh, GL_DYNAMIC_DRAW);
 
     // for (int i = 0; i < mapHeight*mapWidth; i++)
     // {
@@ -261,11 +266,11 @@ void ofApp::update(){
     }
     if (move_up)
     {
-        camera.boom(-10);
+        camera.boom(10);
     }
     if (move_down)
     {
-        camera.boom(10);
+        camera.boom(-10);
     }
     
     ofSetWindowTitle( ofToString( ofGetFrameRate()));
@@ -311,7 +316,8 @@ void ofApp::draw(){
     // camera.roll(1);
     // std::cout << "Camera: " << camera.getPosition() << std::endl;
     
-    mesh.draw();
+    // mesh.draw();
+    terrainVbo.drawElements(GL_TRIANGLES, terrainVbo.getNumIndices());
     camera.end();
     // shader.end();
 }
