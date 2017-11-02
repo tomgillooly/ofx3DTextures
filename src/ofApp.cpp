@@ -244,7 +244,6 @@ void ofApp::update(){
 
     if (move_forward || move_back)
     {
-        // camera.dolly(-10);
         ofVec3f look = camera.getLookAtDir();
         look.z = 0;
 
@@ -323,30 +322,24 @@ void ofApp::keyPressed(int key){
     {
         case 'w':
         case OF_KEY_UP:
-            // camera.dolly(-10);
             move_forward = true;
             break;
         case 's':
         case OF_KEY_DOWN:
-            // camera.dolly(10);
             move_back = true;
             break;
         case 'a':
         case OF_KEY_LEFT:
-            // camera.truck(-10);
             move_left = true;
             break;
         case 'd':
         case OF_KEY_RIGHT:
-            // camera.truck(10);
             move_right = true;
             break;
         case 'e':
-            // camera.boom(10);
             move_up = true;
             break;
         case 'f':
-            // camera.boom(-10);
             move_down = true;
             break;
         default:
@@ -360,30 +353,24 @@ void ofApp::keyReleased(int key){
     {
         case 'w':
         case OF_KEY_UP:
-            // camera.dolly(-10);
             move_forward = false;
             break;
         case 's':
         case OF_KEY_DOWN:
-            // camera.dolly(10);
             move_back = false;
             break;
         case 'a':
         case OF_KEY_LEFT:
-            // camera.truck(-10);
             move_left = false;
             break;
         case 'd':
         case OF_KEY_RIGHT:
-            // camera.truck(10);
             move_right = false;
             break;
         case 'e':
-            // camera.boom(10);
             move_up = false;
             break;
         case 'f':
-            // camera.boom(-10);
             move_down = false;
             break;
         default:
