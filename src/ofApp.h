@@ -4,6 +4,8 @@
 
 #include "ofMain.h"
 
+#include "ofxVolumetrics.h"
+
 // #include "Terrain.h"
 #include <vector>
 #include "Common.h"
@@ -43,6 +45,11 @@ public:
     ofEasyCam                   camera;
     ofMesh                      mesh;
     
+    ofxImageSequencePlayer imageSequence;
+    ofxTexture3d colourTexture;
+    std::vector<ofVec2f> tex_coord_buffer;
+    ofTexture texture;
+
     ofVbo           terrainVbo;
     ofFbo       fbo;
     // ofFbo       maskFbo;

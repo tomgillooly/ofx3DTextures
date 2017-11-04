@@ -22,54 +22,62 @@ void ofApp::setup(){
     sunPos = glm::vec2(0.0f, sunApex);
     sunDir = glm::vec3();
 
-    ofEnableAlphaBlending();
- //    int camWidth 		= 320;	// try to grab at this size. 
-	// int camHeight 		= 240;
-    
- //    vidGrabber.setVerbose(true);
-	// vidGrabber.setup(camWidth,camHeight);
-    
- //    fingerMovie.load("fingers.mov");
-	// fingerMovie.play();
-    
-    if (!logoImg.load("colors.jpg"))
+  
+    shader.load("shaders/shader");
+
+    ofDisableArbTex();
+     if (!ofLoadImage(texture, "colour_texture/colour_text003.tif"))
     {
+        ofLogError() << "Couldn't load the dang texture image";
         ofExit();
     }
- //    multimaskImg.load("mask.jpg");
-    
-    // fbo.allocate(camWidth,camHeight);
- //    maskFbo.allocate(camWidth,camHeight);
-    
-    //ofSetWindowShape(camWidth, camHeight*2);
-    
-    // There are 3 of ways of loading a shader:
-    //
-    //  1 - Using just the name of the shader and ledding ofShader look for .frag and .vert: 
-    //      Ex.: shader.load( "myShader");
-    //
-    //  2 - Giving the right file names for each one: 
-    //      Ex.: shader.load( "myShader.vert","myShader.frag");
-    //
-    //  3 - And the third one is passing the shader programa on a single string;
-    //      In this particular example we are using STRINGIFY which is a handy macro
-    // string shaderProgram = STRINGIFY(
-    //                                  uniform sampler2DRect tex0;
+    if(!texture.isAllocated())
+    {
+        ofLogError() << "Texture didn't allocate";
+        ofExit();
+    }
 
-    //                                  void main (void){
-    //                                      vec2 pos = gl_TexCoord[0].st;
-                                         
-    //                                      vec4 rTxt = texture2DRect(tex0, pos);
-                                         
-    //                                      vec4 color = vec4(0,0,0,0);
-    //                                      color = mix(color, rTxt, mask.r );
-    //                                      color = mix(color, gTxt, mask.g );
-    //                                      color = mix(color, bTxt, mask.b );
-                                         
-    //                                      gl_FragColor = color;
-    //                                  }
-    //                                  );
-    shader.load("Shader.vs", "Shader.ps");
+    shader.setUniformTexture("myTexture", texture, 0); // volume texture reference
+
+    // imageSequence.init("colour_texture/colour_text",3,".tif", 1);
+    // int volWidth = imageSequence.getWidth();
+    // int volHeight = imageSequence.getHeight();
+    // int volDepth = imageSequence.getSequenceLength();
+
+    // cout << "setting up volume data buffer at " << volWidth << "x" << volHeight << "x" << volDepth <<"\n";
+
+    // unsigned char *volumeData = new unsigned char[volWidth*volHeight*volDepth*4];
+    
+    // for(int z=0; z<volDepth; z++)
+    // {
+    //     imageSequence.loadFrame(z);
+    //     for(int x=0; x<volWidth; x++)
+    //     {
+    //         for(int y=0; y<volHeight; y++)
+    //         {
+    //             // convert from greyscale to RGBA, false color
+    //             int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
+    //             // int sample = imageSequence.getPixels()[x+y*volWidth];
+    //             // ofColor c;
+    //             ofColor c = imageSequence.getPixels()[x+y*volWidth];
+    //             // c.setHsb(sample, 255-sample, sample);
+
+    //             volumeData[i4] = c.r;
+    //             volumeData[i4+1] = c.g;
+    //             volumeData[i4+2] = c.b;
+    //             volumeData[i4+3] = 100;
+    //         }
+    //     }
+    // }
+
+    // // colourTexture.allocate(volWidth, volHeight, volDepth, GL_RGBA);
+    // // colourTexture.loadData(volumeData, volWidth, volHeight, volDepth, 0, 0, 0, GL_RGBA);
+    // // myVolume.setup(volWidth, volHeight, volDepth, ofVec3f(1,1,2),true);
+    // // myVolume.updateVolumeData(volumeData,volWidth,volHeight,volDepth,0,0,0);
+    // // myVolume.setRenderSettings(1.0, 1.0, 0.75, 0.1);
+
+    // delete [] volumeData;
+
     // shader.load("SkyShader.vs", "SkyShader.ps");
     // shader.setupShaderFromSource(GL_FRAGMENT_SHADER, shaderProgram);
 
@@ -131,38 +139,42 @@ void ofApp::setup(){
     }
 
 
-    // terrainVbo.setVertexData(heightMap, 3, mapWidth*mapHeight, GL_DYNAMIC_DRAW);
+    // colourTexture.bind();
+    terrainVbo.setVertexData(&heightMap[0], mapWidth*mapHeight, GL_STATIC_DRAW);
 
-    mesh.setMode(OF_PRIMITIVE_TRIANGLES);
-    mesh.addVertices(heightMap);
-
-    for (int i = 0; i < mapHeight*mapWidth; i++)
-    {
-        float depth = mesh.getVertex(i).z;
-        uint8_t col = depth*2.5;
-        mesh.addColor(ofColor(col, col, col, 255));
-    }
+    std::vector<ofIndexType> index_buffer;
+    std::vector<ofVec3f> normal_buffer;
 
     for (int y = 0; y<mapHeight-1; y++){
        for (int x=0; x<mapWidth-1; x++){
-            mesh.addIndex(x+y*mapWidth);               // 0
-            mesh.addIndex((x+1)+y*mapWidth);           // 1
-            mesh.addIndex(x+(y+1)*mapWidth);           // 10
+            index_buffer.push_back(x+y*mapWidth);               // 0
+            index_buffer.push_back((x+1)+y*mapWidth);           // 1
+            index_buffer.push_back(x+(y+1)*mapWidth);           // 10
 
-            mesh.addIndex((x+1)+y*mapWidth);           // 1
-            mesh.addIndex((x+1)+(y+1)*mapWidth);       // 11
-            mesh.addIndex(x+(y+1)*mapWidth);           // 10
+            index_buffer.push_back((x+1)+y*mapWidth);           // 1
+            index_buffer.push_back((x+1)+(y+1)*mapWidth);       // 11
+            index_buffer.push_back(x+(y+1)*mapWidth);           // 10
+            // index_buffer.push_back(x+y*mapWidth);
+            // normal_buffer.push_back(ofVec3f(ofRandom(5, 50)));
         }
     }
 
-    terrainVbo.setMesh(mesh, GL_DYNAMIC_DRAW);
+    for (int y = 0; y<mapHeight; y++){
+       for (int x = 0; x<mapWidth; x++){
+            tex_coord_buffer.push_back(
+                ofVec2f(
+                    (1.0*x) / (mapWidth-1),
+                    (1.0*y) / (mapHeight-1))
+                );                
+        }
+    }
 
-    // for (int i = 0; i < mapHeight*mapWidth; i++)
-    // {
-    //     std::cout << i << ": " << mesh.getVertex(i) << std::endl;
-    // }
-
-    ofEnableDepthTest();
+    terrainVbo.setIndexData(&index_buffer[0], index_buffer.size(), GL_STATIC_DRAW);
+    // terrainVbo.setNormalData(&normal_buffer[0], normal_buffer.size(), GL_STATIC_DRAW);
+    // terrainVbo.setTexCoordData(&tex_coord_buffer[0], tex_coord_buffer.size(), GL_DYNAMIC_DRAW);
+    
+    // colourTexture.unbind();
+    // ofEnableDepthTest();
 
     camera.move(mapWidth/2, 0, 10);
     camera.tilt(60);
@@ -204,7 +216,7 @@ void ofApp::setup(){
 
 //--------------------------------------------------------------
 void ofApp::update(){
-    angle += 0.5;
+    // angle += 0.5;
     // vidGrabber.update();
     // fingerMovie.update();
         
@@ -215,8 +227,8 @@ void ofApp::update(){
     // maskFbo.end();
     
     // GLint uniformLight = shader.getUniformLocation("LightDir");
-    shader.setUniform3fv("LightDir", (float *)&sunDir);
-    shader.setUniform1f("MaxZ", (1.0f - waterLevel) * terrainHeight);
+    // shader.setUniform3fv("LightDir", (float *)&sunDir);
+    // shader.setUniform1f("MaxZ", (1.0f - waterLevel) * terrainHeight);
 
 //      GLuint uniformView = gShader->GetUniformLocation("View");
 //      glUniformMatrix4fv(uniformView, 1, GL_FALSE, value_ptr(viewMatrix));
@@ -278,7 +290,8 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackground(ofColor::gray);
+    ofBackground(ofColor::black);
+    // glDepthMask(GL_FALSE);
     
     // // draw everything
     // ofSetColor(255);
@@ -306,8 +319,18 @@ void ofApp::draw(){
     // ofDrawBitmapString("Final FBO", 320+10+30,240*2+15+30);
     // fbo.draw(0, 0);
 
-    // shader.begin();
+    // ofSetColor(255, 100, 90);
+    
+    // ofEnableBlendMode(OF_BLENDMODE_ADD);
+    // ofEnablePointSprites();
+ 
+    shader.begin();
     camera.begin();
+    // texture.bind();
+    glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
+    
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &tex_coord_buffer[0]);
     // ofScale(2, -2, 2); // flip the y axis and zoom in a bit
     // ofRotateZ(angle);
     // ofRotateY(90);
@@ -318,8 +341,14 @@ void ofApp::draw(){
     
     // mesh.draw();
     terrainVbo.drawElements(GL_TRIANGLES, terrainVbo.getNumIndices());
+    
+    if(terrainVbo.getTexCoordBuffer().size() && terrainVbo.getUsingTexCoords()){
+        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    }
+    
+    // texture.unbind();
     camera.end();
-    // shader.end();
+    shader.end();
 }
 
 //--------------------------------------------------------------
@@ -529,11 +558,11 @@ GLboolean ofApp::LoadHeightMapFromPerlinNoise(GLuint width, GLuint height, GLflo
     {
         for (GLuint x = 0; x < this->mapWidth; x++)
         {
-            GLfloat height = PerlinNoise(x, y, zoom, p);
+            GLfloat height = PerlinNoise(x, y, zoom, p)*100;
             if (height > this->maxHeight) this->maxHeight = height;
 
             // this->heightMap[y * this->mapWidth + x] = height;
-            heightMap.push_back(ofVec3f(x, y, height*100));
+            heightMap.push_back(ofVec3f(x, y, height));
         }
     }
 
