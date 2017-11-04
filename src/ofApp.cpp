@@ -21,6 +21,7 @@ void ofApp::setup(){
     sunApex = 50.0f * pi / 180.f;
     sunPos = glm::vec2(0.0f, sunApex);
     sunDir = glm::vec3();
+    ofEnableBlendMode(OF_BLENDMODE_ALPHA);
 
   
     shader.load("shaders/shader");
@@ -37,47 +38,66 @@ void ofApp::setup(){
         ofExit();
     }
 
-    shader.setUniformTexture("myTexture", texture, 0); // volume texture reference
+    imageSequence.init("colour_texture/colour_text",3,".tif", 0);
+    int volWidth = imageSequence.getWidth();
+    int volHeight = imageSequence.getHeight();
+    int volDepth = imageSequence.getSequenceLength();
 
-    // imageSequence.init("colour_texture/colour_text",3,".tif", 1);
-    // int volWidth = imageSequence.getWidth();
-    // int volHeight = imageSequence.getHeight();
-    // int volDepth = imageSequence.getSequenceLength();
+    cout << "setting up volume data buffer at " << volWidth << "x" << volHeight << "x" << volDepth <<"\n";
 
-    // cout << "setting up volume data buffer at " << volWidth << "x" << volHeight << "x" << volDepth <<"\n";
-
-    // unsigned char *volumeData = new unsigned char[volWidth*volHeight*volDepth*4];
+    unsigned char *volumeData = new unsigned char[volWidth*volHeight*volDepth*4];
     
-    // for(int z=0; z<volDepth; z++)
-    // {
-    //     imageSequence.loadFrame(z);
-    //     for(int x=0; x<volWidth; x++)
-    //     {
-    //         for(int y=0; y<volHeight; y++)
-    //         {
-    //             // convert from greyscale to RGBA, false color
-    //             int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
-    //             // int sample = imageSequence.getPixels()[x+y*volWidth];
-    //             // ofColor c;
-    //             ofColor c = imageSequence.getPixels()[x+y*volWidth];
-    //             // c.setHsb(sample, 255-sample, sample);
+    for(int z=0; z<volDepth; z++)
+    {
+        imageSequence.loadFrame(z);
+        ofColor c = imageSequence.getPixels().getColor(0, 0);
 
-    //             volumeData[i4] = c.r;
-    //             volumeData[i4+1] = c.g;
-    //             volumeData[i4+2] = c.b;
-    //             volumeData[i4+3] = 100;
-    //         }
-    //     }
-    // }
+        ofLogVerbose() << "Pixel colour frame " << z << ": " << c;
+        for(int x=0; x<volWidth; x++)
+        {
+            for(int y=0; y<volHeight; y++)
+            {
+                // convert from greyscale to RGBA, false color
+                int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
+                // ofColor c = imageSequence.getPixels()[x+y*volWidth];
 
-    // // colourTexture.allocate(volWidth, volHeight, volDepth, GL_RGBA);
-    // // colourTexture.loadData(volumeData, volWidth, volHeight, volDepth, 0, 0, 0, GL_RGBA);
+                volumeData[i4] = c.r;
+                volumeData[i4+1] = c.g;
+                volumeData[i4+2] = c.b;
+                volumeData[i4+3] = 255;
+            }
+        }
+    }
+
+    colourTexture.allocate(volWidth, volHeight, volDepth, GL_RGBA);
+    colourTexture.loadData(volumeData, volWidth, volHeight, volDepth, 0, 0, 0, GL_RGBA);
     // // myVolume.setup(volWidth, volHeight, volDepth, ofVec3f(1,1,2),true);
     // // myVolume.updateVolumeData(volumeData,volWidth,volHeight,volDepth,0,0,0);
     // // myVolume.setRenderSettings(1.0, 1.0, 0.75, 0.1);
 
     // delete [] volumeData;
 
+    // shader.setUniformTexture("myTexture", colourTexture, 0); // volume texture reference
+    // glActiveTexture(GL_TEXTURE1);
+    // colourTexture.bind();
+    // shader.setUniform1i("myTexture", 1); // volume texture reference
+    // colourTexture.unbind();
+
+    glActiveTexture(GL_TEXTURE0);
+    ofxTextureData3d texture_data = colourTexture.getTextureData();
+    if (!ofIsGLProgrammableRenderer()){
+        glEnable(texture_data.textureTarget);
+        glBindTexture(texture_data.textureTarget, texture_data.textureID);
+
+        glDisable(texture_data.textureTarget);
+    } else {
+        glBindTexture(texture_data.textureTarget, texture_data.textureID);
+
+    }
+    shader.setUniform1i("myTexture", 0);
+    glActiveTexture(GL_TEXTURE0);
+
+    // glActiveTexture(GL_TEXTURE0);
     // shader.load("SkyShader.vs", "SkyShader.ps");
     // shader.setupShaderFromSource(GL_FRAGMENT_SHADER, shaderProgram);
 
@@ -141,6 +161,7 @@ void ofApp::setup(){
 
     // colourTexture.bind();
     terrainVbo.setVertexData(&heightMap[0], mapWidth*mapHeight, GL_STATIC_DRAW);
+    // terrainVbo.setColorData(&heightMap[0].x, mapWidth*mapHeight*3, GL_STATIC_DRAW, sizeof(ofVec3f));
 
     std::vector<ofIndexType> index_buffer;
     std::vector<ofVec3f> normal_buffer;
@@ -162,9 +183,12 @@ void ofApp::setup(){
     for (int y = 0; y<mapHeight; y++){
        for (int x = 0; x<mapWidth; x++){
             tex_coord_buffer.push_back(
-                ofVec2f(
+                ofVec3f(
                     (1.0*x) / (mapWidth-1),
-                    (1.0*y) / (mapHeight-1))
+                    (1.0*y) / (mapHeight-1),
+                    // 1.0, 1.0,
+                    (1.0*heightMap[x+y*mapWidth].z) / maxHeight + 0.5/volDepth)
+                    // 0.5 / volDepth)
                 );                
         }
     }
@@ -330,7 +354,7 @@ void ofApp::draw(){
     glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
     
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(ofVec2f), &tex_coord_buffer[0]);
+    glTexCoordPointer(3, GL_FLOAT, sizeof(ofVec3f), &tex_coord_buffer[0]);
     // ofScale(2, -2, 2); // flip the y axis and zoom in a bit
     // ofRotateZ(angle);
     // ofRotateY(90);

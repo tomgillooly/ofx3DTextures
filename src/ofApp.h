@@ -47,7 +47,7 @@ public:
     
     ofxImageSequencePlayer imageSequence;
     ofxTexture3d colourTexture;
-    std::vector<ofVec2f> tex_coord_buffer;
+    std::vector<ofVec3f> tex_coord_buffer;
     ofTexture texture;
 
     ofVbo           terrainVbo;
