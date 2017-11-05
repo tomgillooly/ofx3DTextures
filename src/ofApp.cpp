@@ -38,7 +38,7 @@ void ofApp::setup(){
         ofExit();
     }
 
-    imageSequence.init("colour_texture/colour_text",3,".tif", 0);
+    imageSequence.init("colour_texture_split/colour_text",3,".tif", 0);
     int volWidth = imageSequence.getWidth();
     int volHeight = imageSequence.getHeight();
     int volDepth = imageSequence.getSequenceLength();
@@ -50,16 +50,16 @@ void ofApp::setup(){
     for(int z=0; z<volDepth; z++)
     {
         imageSequence.loadFrame(z);
-        ofColor c = imageSequence.getPixels().getColor(0, 0);
+        // ofColor c = imageSequence.getPixels().getColor(0, 0);
 
-        ofLogVerbose() << "Pixel colour frame " << z << ": " << c;
+        // ofLogVerbose() << "Pixel colour frame " << z << ": " << c;
         for(int x=0; x<volWidth; x++)
         {
             for(int y=0; y<volHeight; y++)
             {
                 // convert from greyscale to RGBA, false color
                 int i4 = ((x+volWidth*y)+z*volWidth*volHeight)*4;
-                // ofColor c = imageSequence.getPixels()[x+y*volWidth];
+                ofColor c = imageSequence.getPixels().getColor(x, y);
 
                 volumeData[i4] = c.r;
                 volumeData[i4+1] = c.g;
