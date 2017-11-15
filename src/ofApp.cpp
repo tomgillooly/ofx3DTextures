@@ -83,7 +83,7 @@ void ofApp::setup(){
     // shader.setUniform1i("myTexture", 1); // volume texture reference
     // colourTexture.unbind();
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     ofxTextureData3d texture_data = colourTexture.getTextureData();
     if (!ofIsGLProgrammableRenderer()){
         glEnable(texture_data.textureTarget);
@@ -94,7 +94,7 @@ void ofApp::setup(){
         glBindTexture(texture_data.textureTarget, texture_data.textureID);
 
     }
-    shader.setUniform1i("myTexture", 0);
+    shader.setUniform1i("myTexture", 1);
     glActiveTexture(GL_TEXTURE0);
 
     // glActiveTexture(GL_TEXTURE0);
@@ -152,6 +152,23 @@ void ofApp::setup(){
         }
     }
 
+    depthImage.allocate(mapWidth, mapHeight);
+    depthImage.setFromPixels(&heightMap[0], mapWidth, mapHeight);
+    depthImage.setNativeScale(0, maxHeight);        // This needs to be here, at least for the image save step
+    depthImage.updateTexture();
+
+    shader.setUniform1f("maxHeight", maxHeight);
+
+    std::string DepthOutName = "DebugFiles/RawDepthImg.png";
+
+    ofxCvFloatImage temp;
+    temp.setFromPixels(depthImage.getFloatPixelsRef().getData(), mapWidth, mapHeight);
+    temp.setNativeScale(depthImage.getNativeScaleMin(), depthImage.getNativeScaleMax());
+    temp.convertToRange(0, 1);
+    ofxCvGrayscaleImage temp2;
+    temp2.setFromPixels(temp.getFloatPixelsRef());
+    ofSaveImage(temp2.getPixels(), DepthOutName);
+
     // //Compute terrain
     // if (!gTerrain->ComputeTerrain(gWaterLevel, gTerrainHeight, terrainVbo))
     {
@@ -160,14 +177,17 @@ void ofApp::setup(){
 
 
     // colourTexture.bind();
-    terrainVbo.setVertexData(&heightMap[0], mapWidth*mapHeight, GL_STATIC_DRAW);
+    // terrainVbo.setVertexData(&heightMap[0], mapWidth*mapHeight, GL_STATIC_DRAW);
     // terrainVbo.setColorData(&heightMap[0].x, mapWidth*mapHeight*3, GL_STATIC_DRAW, sizeof(ofVec3f));
 
     std::vector<ofIndexType> index_buffer;
+    std::vector<ofVec3f> vertex_buffer;
     std::vector<ofVec3f> normal_buffer;
 
     for (int y = 0; y<mapHeight-1; y++){
        for (int x=0; x<mapWidth-1; x++){
+            vertex_buffer.push_back(ofVec3f(x, y, 0));
+
             index_buffer.push_back(x+y*mapWidth);               // 0
             index_buffer.push_back((x+1)+y*mapWidth);           // 1
             index_buffer.push_back(x+(y+1)*mapWidth);           // 10
@@ -175,28 +195,32 @@ void ofApp::setup(){
             index_buffer.push_back((x+1)+y*mapWidth);           // 1
             index_buffer.push_back((x+1)+(y+1)*mapWidth);       // 11
             index_buffer.push_back(x+(y+1)*mapWidth);           // 10
-            // index_buffer.push_back(x+y*mapWidth);
-            // normal_buffer.push_back(ofVec3f(ofRandom(5, 50)));
         }
     }
 
     for (int y = 0; y<mapHeight; y++){
        for (int x = 0; x<mapWidth; x++){
             tex_coord_buffer.push_back(
-                ofVec3f(
+                ofVec2f(
                     (1.0*x) / (mapWidth-1),
-                    (1.0*y) / (mapHeight-1),
+                    (1.0*y) / (mapHeight-1))
                     // 1.0, 1.0,
-                    (1.0*heightMap[x+y*mapWidth].z) / maxHeight + 0.5/volDepth)
+                    // (1.0*heightMap[x+y*mapWidth]) / maxHeight + 0.5/volDepth)
                     // 0.5 / volDepth)
+                    // x, y)
                 );                
         }
     }
 
-    terrainVbo.setIndexData(&index_buffer[0], index_buffer.size(), GL_STATIC_DRAW);
+    // terrainVbo.setVertexData(&vertex_buffer[0], vertex_buffer.size(), GL_STATIC_DRAW);
+    // terrainVbo.setIndexData(&index_buffer[0], index_buffer.size(), GL_STATIC_DRAW);
     // terrainVbo.setNormalData(&normal_buffer[0], normal_buffer.size(), GL_STATIC_DRAW);
     // terrainVbo.setTexCoordData(&tex_coord_buffer[0], tex_coord_buffer.size(), GL_DYNAMIC_DRAW);
     
+    mesh.addVertices(vertex_buffer);
+    mesh.addIndices(index_buffer);
+    mesh.addTexCoords(tex_coord_buffer);
+
     // colourTexture.unbind();
     // ofEnableDepthTest();
 
@@ -347,14 +371,15 @@ void ofApp::draw(){
     
     // ofEnableBlendMode(OF_BLENDMODE_ADD);
     // ofEnablePointSprites();
- 
+    
     shader.begin();
+    shader.setUniformTexture("depthTexture",depthImage.getTexture(), 2);    // Fails when bound to 0
     camera.begin();
     // texture.bind();
-    glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_TRIANGLES);
     
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    glTexCoordPointer(3, GL_FLOAT, sizeof(ofVec3f), &tex_coord_buffer[0]);
+    // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    // glTexCoordPointer(3, GL_FLOAT, sizeof(ofVec3f), &tex_coord_buffer[0]);
     // ofScale(2, -2, 2); // flip the y axis and zoom in a bit
     // ofRotateZ(angle);
     // ofRotateY(90);
@@ -363,16 +388,17 @@ void ofApp::draw(){
     // camera.roll(1);
     // std::cout << "Camera: " << camera.getPosition() << std::endl;
     
-    // mesh.draw();
-    terrainVbo.drawElements(GL_TRIANGLES, terrainVbo.getNumIndices());
+    mesh.draw();
+    // terrainVbo.drawElements(GL_TRIANGLES, terrainVbo.getNumIndices());
     
-    if(terrainVbo.getTexCoordBuffer().size() && terrainVbo.getUsingTexCoords()){
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
+    // if(terrainVbo.getTexCoordBuffer().size() && terrainVbo.getUsingTexCoords()){
+    //     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    // }
     
     // texture.unbind();
     camera.end();
     shader.end();
+    // depthImage.getTexture().unbind();
 }
 
 //--------------------------------------------------------------
@@ -449,7 +475,12 @@ void ofApp::mouseDragged(int x, int y, int button){
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-
+    int ind = y * mapWidth + x;
+    if (ind >= 0 && ind < depthImage.getFloatPixelsRef().getTotalBytes())
+    {
+        float z = depthImage.getFloatPixelsRef().getData()[ind];
+        std::cout << "Kinect depth (x, y, z) = (" << x << ", " << y << ", " << z << ")" << std::endl;
+    }
 }
 
 //--------------------------------------------------------------
@@ -540,7 +571,7 @@ GLboolean ofApp::LoadHeightMap(const char* path)
 
                 //Insert into height map
                 // heightMap[y * this->mapWidth + x] = ofVec3f(x, y, val);
-                heightMap.push_back(ofVec3f(x, y, val));
+                heightMap.push_back(static_cast<float>(val));
             }
         }
 
@@ -586,7 +617,7 @@ GLboolean ofApp::LoadHeightMapFromPerlinNoise(GLuint width, GLuint height, GLflo
             if (height > this->maxHeight) this->maxHeight = height;
 
             // this->heightMap[y * this->mapWidth + x] = height;
-            heightMap.push_back(ofVec3f(x, y, height));
+            heightMap.push_back(static_cast<float>(height));
         }
     }
 

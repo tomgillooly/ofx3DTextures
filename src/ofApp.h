@@ -4,6 +4,7 @@
 
 #include "ofMain.h"
 
+#include "ofxOpenCv.h"
 #include "ofxVolumetrics.h"
 
 // #include "Terrain.h"
@@ -31,7 +32,9 @@ public:
     GLboolean LoadHeightMap(const char* path);
     GLboolean LoadHeightMapFromPerlinNoise(GLuint width, GLuint height, GLfloat zoom, GLfloat p);
 
-    std::vector<ofVec3f>    heightMap;
+    // std::vector<ofVec3f>    heightMap;
+    std::vector<float> heightMap;
+    ofxCvFloatImage depthImage;
     GLuint      mapWidth;
     GLuint      mapHeight;
     GLfloat     maxHeight;
@@ -47,7 +50,7 @@ public:
     
     ofxImageSequencePlayer imageSequence;
     ofxTexture3d colourTexture;
-    std::vector<ofVec3f> tex_coord_buffer;
+    std::vector<ofVec2f> tex_coord_buffer;
     ofTexture texture;
 
     ofVbo           terrainVbo;
