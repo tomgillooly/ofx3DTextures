@@ -32,18 +32,11 @@ public:
     GLboolean LoadHeightMap(const char* path);
     GLboolean LoadHeightMapFromPerlinNoise(GLuint width, GLuint height, GLfloat zoom, GLfloat p);
 
-    // std::vector<ofVec3f>    heightMap;
     std::vector<float> heightMap;
     ofxCvFloatImage depthImage;
     GLuint      mapWidth;
     GLuint      mapHeight;
     GLfloat     maxHeight;
-
-	
-    ofImage     logoImg;
-    // ofImage     multimaskImg;
-    // ofVideoPlayer 		fingerMovie;
-    // ofVideoGrabber 		vidGrabber;
 
     ofEasyCam                   camera;
     ofMesh                      mesh;
@@ -51,28 +44,12 @@ public:
     ofxImageSequencePlayer imageSequence;
     ofxTexture3d colourTexture;
     std::vector<ofVec2f> tex_coord_buffer;
-    ofTexture texture;
 
-    ofVbo           terrainVbo;
-    ofFbo       fbo;
-    // ofFbo       maskFbo;
-    // ofCamera cam;
-    float angle;
+    // ofVbo           terrainVbo;
+
     ofShader    shader;
-    // ofShader    sky_shader;
 
     string                      heightMapFile;
-
-    // Terrain*                    gTerrain;
-    GLuint                      gSkyVertices;
-    GLuint                      gSkyIndices;
-    GLfloat                     waterChange;
-    GLfloat                     waterLevel;
-    GLfloat                     terrainHeight;
-
-    GLfloat                     sunApex;
-    glm::vec2                   sunPos;
-    glm::vec3                   sunDir;
 
     bool move_forward;
     bool move_back;
