@@ -2,8 +2,9 @@
 //EXAM 2014
 
 #pragma once
+#include <OpenGL/gl.h>
 
-#include "Common.h"
+// #include "Common.h"
 
 //Just some fun from last semester's maths course
 

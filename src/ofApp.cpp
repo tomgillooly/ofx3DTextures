@@ -12,7 +12,8 @@ void ofApp::setup(){
   
     shader.load("shaders/shader");
 
-    ofDisableArbTex();
+    // ofDisableArbTex();
+    ofEnableArbTex();
 
     imageSequence.init("colour_texture_split/colour_text",3,".tif", 0);
     int volWidth = imageSequence.getWidth();
@@ -94,7 +95,6 @@ void ofApp::setup(){
 
     for (int y = 0; y<mapHeight-1; y++){
        for (int x=0; x<mapWidth-1; x++){
-            vertex_buffer.push_back(ofVec3f(x, y, 0));
 
             index_buffer.push_back(x+y*mapWidth);               // 0
             index_buffer.push_back((x+1)+y*mapWidth);           // 1
@@ -108,11 +108,12 @@ void ofApp::setup(){
 
     for (int y = 0; y<mapHeight; y++){
        for (int x = 0; x<mapWidth; x++){
+            vertex_buffer.push_back(ofVec3f(x, y, 0));
             tex_coord_buffer.push_back(
                 ofVec2f(
-                    (1.0*x) / (mapWidth-1),
-                    (1.0*y) / (mapHeight-1))
-                    // x, y)                    // Magic sand just uses x and y. Why does it work?
+                    // (1.0*x) / (mapWidth-1),
+                    // (1.0*y) / (mapHeight-1))
+                    x, y)                    // Magic sand just uses x and y. Why does it work?
                 );                
         }
     }
@@ -169,6 +170,8 @@ void ofApp::draw(){
     
     // depthImage.getTexture().bind();      // Magic Sand just does this and it binds to tex0 - doesn't work for me though
     shader.begin();
+    shader.setUniform1f("maxHeight", maxHeight);
+    // shader.setUniformTexture("depthTexture", tiffDepthImage.getTexture(), 2);
     shader.setUniformTexture("depthTexture",depthImage.getTexture(), 2);    // Fails when bound to 0
     camera.begin();
     

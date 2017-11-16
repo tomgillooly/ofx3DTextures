@@ -4,6 +4,10 @@
 #include "Perlin.h"
 
 #include <algorithm>
+#include <glm/glm.hpp>
+#include <cmath>
+
+const double pi = std::acos(-1);
 
 using namespace glm;
 
@@ -22,7 +26,7 @@ GLfloat Rand(GLfloat x, GLfloat y)
 //Applies spherical interpolation between two values
 GLfloat Slerp(GLfloat a, GLfloat b, GLfloat t)
 {
-	GLfloat ft	= t * pi<GLfloat>();
+	GLfloat ft	= t * pi;
 	GLfloat f	= (1.0f - cos(ft)) * 0.5f;
 	return a * (1.0f - f) + b * f;
 }
