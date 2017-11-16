@@ -111,9 +111,9 @@ void ofApp::setup(){
             vertex_buffer.push_back(ofVec3f(x, y, 0));
             tex_coord_buffer.push_back(
                 ofVec2f(
-                    // (1.0*x) / (mapWidth-1),
-                    // (1.0*y) / (mapHeight-1))
-                    x, y)                    // Magic sand just uses x and y. Why does it work?
+                    (1.0*x) / (mapWidth-1),
+                    (1.0*y) / (mapHeight-1))
+                    // x, y)                    // Magic sand just uses x and y. Why does it work?
                 );                
         }
     }
@@ -167,12 +167,10 @@ void ofApp::update(){
 void ofApp::draw(){
     ofBackground(ofColor::black);
     
-    
-    // depthImage.getTexture().bind();      // Magic Sand just does this and it binds to tex0 - doesn't work for me though
     shader.begin();
+    shader.setUniformTexture("tex0",depthImage.getTexture(), 2);    // Fails when bound to 0
     shader.setUniform1f("maxHeight", maxHeight);
-    // shader.setUniformTexture("depthTexture", tiffDepthImage.getTexture(), 2);
-    shader.setUniformTexture("depthTexture",depthImage.getTexture(), 2);    // Fails when bound to 0
+    shader.setUniform1f("colourTextureDepth", colourTexture.getTextureData().depth);
     camera.begin();
     
 
@@ -189,7 +187,6 @@ void ofApp::draw(){
     
     camera.end();
     shader.end();
-    // depthImage.getTexture().unbind();
 }
 
 //--------------------------------------------------------------
