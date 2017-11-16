@@ -12,8 +12,7 @@ void ofApp::setup(){
   
     shader.load("shaders/shader");
 
-    // ofDisableArbTex();
-    ofEnableArbTex();
+    ofEnableArbTex(); // tex coords from 0 - imagewidth
 
     imageSequence.init("colour_texture_split/colour_text",3,".tif", 0);
     int volWidth = imageSequence.getWidth();
@@ -49,7 +48,7 @@ void ofApp::setup(){
     colourTexture.loadData(volumeData, volWidth, volHeight, volDepth, 0, 0, 0, GL_RGBA);
     
     // Bind the 3D texture and set the sampler variable in the fragment shader
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTextureARB(GL_TEXTURE1);
     ofxTextureData3d texture_data = colourTexture.getTextureData();
     if (!ofIsGLProgrammableRenderer()){
         glEnable(texture_data.textureTarget);
@@ -60,8 +59,7 @@ void ofApp::setup(){
         glBindTexture(texture_data.textureTarget, texture_data.textureID);
 
     }
-    shader.setUniform1i("myTexture", 1);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTextureARB(GL_TEXTURE0);
 
     //Generate random heightmap
     if (!LoadHeightMapFromPerlinNoise(1024, 1024, 250.f, 0.5f))
@@ -108,13 +106,9 @@ void ofApp::setup(){
 
     for (int y = 0; y<mapHeight; y++){
        for (int x = 0; x<mapWidth; x++){
-            vertex_buffer.push_back(ofVec3f(x, y, 0));
-            tex_coord_buffer.push_back(
-                ofVec2f(
-                    (1.0*x) / (mapWidth-1),
-                    (1.0*y) / (mapHeight-1))
-                    // x, y)                    // Magic sand just uses x and y. Why does it work?
-                );                
+            ofVec2f pt = ofVec2f(x, y);
+            vertex_buffer.push_back(ofVec3f(pt.x, pt.y, 0));
+            tex_coord_buffer.push_back(pt);                
         }
     }
 
@@ -168,9 +162,10 @@ void ofApp::draw(){
     ofBackground(ofColor::black);
     
     shader.begin();
+    shader.setUniform1i("myTexture", 1);
     shader.setUniformTexture("tex0",depthImage.getTexture(), 2);    // Fails when bound to 0
     shader.setUniform1f("maxHeight", maxHeight);
-    shader.setUniform1f("colourTextureDepth", colourTexture.getTextureData().depth);
+    shader.setUniform2f("meshDim", mapWidth, mapHeight);
     camera.begin();
     
 
