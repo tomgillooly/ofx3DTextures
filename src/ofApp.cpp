@@ -10,6 +10,8 @@
 void ofApp::setup(){
     ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   
+    fboWindow.allocate(1024, 768, GL_RGBA);
+
     shader.load("shaders/shader");
 
     ofEnableArbTex(); // tex coords from 0 - imagewidth
@@ -155,33 +157,25 @@ void ofApp::update(){
     }
     
     ofSetWindowTitle( ofToString( ofGetFrameRate()));
+    
+    fboWindow.begin();
+    ofBackground(ofColor::black);
+    depthImage.getTexture().bind();
+    shader.begin();
+    shader.setUniform1i("myTexture", 1);
+    shader.setUniform1f("maxHeight", maxHeight);
+    shader.setUniform2f("meshDim", mapWidth, mapHeight);
+    camera.begin();
+    mesh.draw();
+    camera.end();
+    shader.end();
+    depthImage.getTexture().unbind();
+    fboWindow.end();
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofBackground(ofColor::black);
-    
-    shader.begin();
-    shader.setUniform1i("myTexture", 1);
-    shader.setUniformTexture("tex0",depthImage.getTexture(), 2);    // Fails when bound to 0
-    shader.setUniform1f("maxHeight", maxHeight);
-    shader.setUniform2f("meshDim", mapWidth, mapHeight);
-    camera.begin();
-    
-
-    // We need to do this for the 3D texture coordinates for some reason
-    // glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    // glTexCoordPointer(3, GL_FLOAT, sizeof(ofVec3f), &tex_coord_buffer[0]);
-    
-    mesh.draw();
-    // terrainVbo.drawElements(GL_TRIANGLES, terrainVbo.getNumIndices());
-    
-    // if(terrainVbo.getTexCoordBuffer().size() && terrainVbo.getUsingTexCoords()){
-    //     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    // }
-    
-    camera.end();
-    shader.end();
+    fboWindow.draw(0, 0);
 }
 
 //--------------------------------------------------------------

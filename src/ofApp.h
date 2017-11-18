@@ -40,6 +40,8 @@ public:
 
     ofEasyCam                   camera;
     ofMesh                      mesh;
+
+    ofFbo fboWindow;
     
     ofxImageSequencePlayer imageSequence;
     ofxTexture3d colourTexture;
