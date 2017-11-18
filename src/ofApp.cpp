@@ -162,7 +162,7 @@ void ofApp::update(){
     ofBackground(ofColor::black);
     depthImage.getTexture().bind();
     shader.begin();
-    shader.setUniform1i("myTexture", 1);
+    shader.setUniform1i("colourTexture", 1);
     shader.setUniform1f("maxHeight", maxHeight);
     shader.setUniform2f("meshDim", mapWidth, mapHeight);
     camera.begin();
